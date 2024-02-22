@@ -1,39 +1,78 @@
 from typing import Final
-from telegram import Update
+from telegram import Update, Bot
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import mysql.connector
 from tabulate import tabulate
+from prettytable import PrettyTable
 
 TOKEN: Final = '7148715635:AAHQ-x2P3iB6AVjf5DhIykFG8tEluLvPZok'
 BOT_USERNAME: Final = '@Scoring_For_TAs_Bot'
 
+table = PrettyTable()
+queue = []
+previous_command: str = 'None'
+previous_query: str = 'None'
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(f'Hello {update.message.from_user.full_name}!')
-
+    await update.message.reply_text(f"Hello {update.message.from_user.full_name}!\nWelcom to Scoring Bot"
+                                    f"\nIf u don't know how to use this bot use /help command or ask your "
+                                    f"questions from below ID:\n@Mohammad_Jafari81")
+    global previous_command
+    previous_command = 'start'
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text('Helping part')
-
+    global previous_command
+    previous_command = 'help'
 async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text('This is a custom command!')
+    global previous_command
+    previous_command = 'custom'
 
-
-async def table_command(update: Update, comtext: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('Connecting to server...')
+async def table_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = await update.message.reply_text('Connecting to server...')
+    queue.append(msg)
     db = connect_database()
 
     # Check Connection
 
     if db.is_connected():
-        await update.message.reply_text("connected succesfully✅")
-    else:
-        await update.message.reply_text("Error while connecting to MySQL❌")
 
-    mycursor = db.cursor()
-    query: str = "select userid, username from user"
-    mycursor.execute(query)
-    info = mycursor.fetchall()
-    print(tabulate(info, tablefmt="fancy_grid", showindex=True))
-    await update.message.reply_text(info)
+        msg = await update.message.reply_text("connected succesfully✅")
+        queue.append(msg)
+        global previous_command
+        if previous_command != 'show':
+            table.clear()
+            mycursor = db.cursor()
+            query: str = "select userid, username from user"
+            global previous_query
+            previous_query = query
+            mycursor.execute(query)
+            info = mycursor.fetchall()
+            a = []
+            i = info[0]
+            len1 = len(i)
+            for i in range(0, len1):
+                a.append(i)
+            print(a)
+            table.field_names = a
+            for i in info:
+                print(list(i))
+                table.add_row(list(i))
+
+
+        # Deleting 2 Prewious messages
+
+        await context.bot.delete_message(chat_id=queue[0].chat_id, message_id=queue[0].message_id)
+        await context.bot.delete_message(chat_id=queue[1].chat_id, message_id=queue[1].message_id)
+
+        queue.clear()
+        # Print table
+        response = '```\n{}```'.format(table.get_string())
+        await update.message.reply_text(response, parse_mode='Markdown')
+        print(tabulate(info, tablefmt="presto", showindex=True))
+        previous_command = 'show'
+    else:
+        msg = await update.message.reply_text("Error while connecting to MySQL❌")
+        queue.append(msg)
 
 
 
