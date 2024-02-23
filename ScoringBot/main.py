@@ -119,11 +119,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         response: str = handle_response(text)
     if response == 'excel':
-        await update.reply_document(
-            document=open("./user.xlsx", "rb"),
-            filename="user.xlsx",
-            caption="فایل نمرات"
-        )
+        chat_id = update.message.chat_id
+        document = open('user.xlsx','rb')
+        await context.bot.send_document(chat_id,document)
+
     else:
         print('Bot:', response)
         await update.message.reply_text(response)
