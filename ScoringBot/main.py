@@ -121,7 +121,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if response == 'excel':
         chat_id = update.message.chat_id
         document = open('user.xlsx','rb')
+        msg = await update.message.reply_text('Sending file...')
+        queue.append(msg)
         await context.bot.send_document(chat_id,document)
+        await context.bot.delete_message(chat_id=queue[0].chat_id, message_id=queue[0].message_id)
+        queue.pop()
+        print(queue[0])
 
     else:
         print('Bot:', response)
