@@ -126,8 +126,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_document(chat_id,document)
         await context.bot.delete_message(chat_id=queue[0].chat_id, message_id=queue[0].message_id)
         queue.pop()
-        print(queue[0])
-
     else:
         print('Bot:', response)
         await update.message.reply_text(response)
