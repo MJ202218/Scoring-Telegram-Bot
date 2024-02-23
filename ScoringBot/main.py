@@ -28,74 +28,74 @@ async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     previous_command = 'custom'
 
 async def table_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    msg = await update.message.reply_text('Connecting to server...')
-    queue.append(msg)
-    db = connect_database()
-
-    # Check Connection
-
-    if db.is_connected():
-
-        msg = await update.message.reply_text("connected succesfully✅")
-        queue.append(msg)
+    try:
         global previous_command
+
         if previous_command != 'show':
+
+            msg = await update.message.reply_text('Connecting to server...')
+            queue.append(msg)
+            db = connect_database("phase_2")
+
+            # Check Connection
+
+
             table.clear()
             mycursor = db.cursor()
-            query: str = "select userid, username from user"
+            query: str = "select userid, groupid, role from groupmembership"
             global previous_query
             previous_query = query
             mycursor.execute(query)
             info = mycursor.fetchall()
-            a = []
-            i = info[0]
-            len1 = len(i)
-            for i in range(0, len1):
-                a.append(i)
-            print(a)
-            table.field_names = a
+            msg = await update.message.reply_text("connected succesfully✅")
+            queue.append(msg)
+            column_names = [i[0] for i in mycursor.description]
+            table.field_names = column_names
             for i in info:
                 print(list(i))
                 table.add_row(list(i))
 
+            # Deleting 2 Prewious messages
 
-        # Deleting 2 Prewious messages
+            await context.bot.delete_message(chat_id=queue[0].chat_id, message_id=queue[0].message_id)
+            await context.bot.delete_message(chat_id=queue[1].chat_id, message_id=queue[1].message_id)
 
-        await context.bot.delete_message(chat_id=queue[0].chat_id, message_id=queue[0].message_id)
-        await context.bot.delete_message(chat_id=queue[1].chat_id, message_id=queue[1].message_id)
-
-        queue.clear()
-        # Print table
+            queue.clear()
+            # Print table
         response = '```\n{}```'.format(table.get_string())
         await update.message.reply_text(response, parse_mode='Markdown')
-        print(tabulate(info, tablefmt="presto", showindex=True))
         previous_command = 'show'
-    else:
-        msg = await update.message.reply_text("Error while connecting to MySQL❌")
+
+
+
+    except Exception as e:
+        msg = await update.message.reply_text(f"Error while connecting to MySQL❌\n"
+                                              f"Error: {e}")
         queue.append(msg)
 
 
 
-# Connect
-def connect_database():
-        db = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="1234",
-            database="phase_2"
-        )
-        return db
 
-    #finally:
-        #if db.is_connected():
-           # mycursor.close()
-           # db.close()
-           # print("MySQL connection is closed")
+
+# Connect
+def connect_database(DB: str):
+
+    db = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="1234",
+        database= DB
+    )
+    return db
+
+
 # Responses
 
 def handle_response(text: str) -> str:
     processed: str = text.lower()
     numbers: str = processed.split(" ")
+    if 'e' in processed:
+        return 'excel'
     if 'hello' in processed:
         return 'کتابچی دوست دارم ❤️💕'
     if 'how are u' in processed:
@@ -118,9 +118,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
     else:
         response: str = handle_response(text)
+    if response == 'excel':
+        await update.reply_document(
+            document=open("./user.xlsx", "rb"),
+            filename="user.xlsx",
+            caption="فایل نمرات"
+        )
+    else:
+        print('Bot:', response)
+        await update.message.reply_text(response)
 
-    print('Bot:', response)
-    await update.message.reply_text(response)
 
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f"Update {update} caused error {context.error}")

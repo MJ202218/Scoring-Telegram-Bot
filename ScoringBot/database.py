@@ -13,8 +13,7 @@ def connection():
         mycursor = db.cursor()
         mycursor.execute("select userid, username from user")
         info = mycursor.fetchall()
-        for i in info:
-            print (list(i))
+        print(info)
         #print(tabulate(info, tablefmt="fancy_grid", showindex=True))
     except Exception as e:
         print("Error while connecting to MySQL", e)
