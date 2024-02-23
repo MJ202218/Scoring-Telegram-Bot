@@ -57,8 +57,8 @@ async def table_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             # Deleting 2 Prewious messages
 
-            await context.bot.delete_message(chat_id=queue[0].chat_id, message_id=queue[0].message_id)
             await context.bot.delete_message(chat_id=queue[1].chat_id, message_id=queue[1].message_id)
+            await context.bot.delete_message(chat_id=queue[0].chat_id, message_id=queue[0].message_id)
 
             queue.clear()
             # Print table
