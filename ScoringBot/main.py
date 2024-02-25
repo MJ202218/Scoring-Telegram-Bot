@@ -1,5 +1,5 @@
 from typing import Final
-from telegram import Update, Bot
+from telegram import Update, Bot, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import mysql.connector
 from tabulate import tabulate
@@ -8,6 +8,13 @@ from prettytable import PrettyTable
 TOKEN: Final = '7148715635:AAHQ-x2P3iB6AVjf5DhIykFG8tEluLvPZok'
 BOT_USERNAME: Final = '@Scoring_For_TAs_Bot'
 
+keyboard = [
+        ["e", '/show'],
+        ["hello"],
+    ]
+
+a = ReplyKeyboardMarkup(keyboard, resize_keyboard=True , one_time_keyboard=True)
+
 table = PrettyTable()
 queue = []
 previous_command: str = 'None'
@@ -15,7 +22,7 @@ previous_query: str = 'None'
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"Hello {update.message.from_user.full_name}!\nWelcom to Scoring Bot"
                                     f"\nIf u don't know how to use this bot use /help command or ask your "
-                                    f"questions from below ID:\n@Mohammad_Jafari81")
+                                    f"questions from below ID:\n@Mohammad_Jafari81", reply_markup=a)
     global previous_command
     previous_command = 'start'
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -94,7 +101,7 @@ def connect_database(DB: str):
 def handle_response(text: str) -> str:
     processed: str = text.lower()
     numbers: str = processed.split(" ")
-    if 'e' in processed:
+    if processed == 'e':
         return 'excel'
     if 'hello' in processed:
         return 'کتابچی دوست دارم ❤️💕'
