@@ -1,36 +1,56 @@
-from typing import Final
 from telegram import Update, Bot, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import mysql.connector
 from tabulate import tabulate
 from prettytable import PrettyTable
+from bot_info import BOT_TOKEN, BOT_USERNAME, ADMINS_userID, ADMINS_USERNAME
+from Userl import User
 
-TOKEN: Final = '7148715635:AAHQ-x2P3iB6AVjf5DhIykFG8tEluLvPZok'
-BOT_USERNAME: Final = '@Scoring_For_TAs_Bot'
-
-keyboard = [
-        ["e", '/show'],
-        ["hello", '/help'],
-    ]
-
-a = ReplyKeyboardMarkup(keyboard, resize_keyboard=True , one_time_keyboard=True)
-ab = [
-        ['how are u'],
-        ["d"],
-    ]
-c = ReplyKeyboardMarkup(ab, resize_keyboard=True , one_time_keyboard=True)
+online_users = []
 table = PrettyTable()
 queue = []
 previous_command: str = 'None'
 previous_query: str = 'None'
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(f"Hello {update.message.from_user.full_name}!\nWelcom to Scoring Bot"
+    role:str
+    if str(update.message.from_user.id) in ADMINS_userID:
+        role = 'ADMIN'
+    else:
+        role = 'NORMAL'
+
+    user = User(update.message.from_user.full_name, update.message.from_user.id,update.message.from_user.username, role)
+    online_users.append(user)
+
+    await update.message.reply_text(f"Hello {user.fullname}!\nWelcom to Scoring Bot"
                                     f"\nIf u don't know how to use this bot use /help command or ask your "
-                                    f"questions from below ID:\n@Mohammad_Jafari81", reply_markup=a)
+                                    f"questions from below ID:\n{ADMINS_USERNAME[0]}", reply_markup=user.get_keyboard())
+    # Sending Requests to Admins
+    if str(user.userid) not in ADMINS_userID:
+        for adminsUserID in ADMINS_userID:
+
+            msg = (f"#request\n"
+                   f"User {update.message.from_user.full_name} "
+                   f"with ID <{update.message.from_user.id}>  ")
+            if user.username != None:
+                msg = msg + f"and username @{user.username} requested to be added as TA"
+            else:
+                msg = msg + f"and username {user.username} requested to be added as TA"
+            await context.bot.send_message(chat_id=adminsUserID, text=msg)
+
     global previous_command
     previous_command = 'start'
+
+def exist_in_online_Users(userid):
+    for user in online_users:
+        if userid == user.userid:
+            return True
+    return False
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('Helping part', reply_markup=c)
+    iu:int = -1
+    for i in range (0, len(online_users)):
+        if online_users[i].userid == update.message.from_user.id:
+            iu = i
+    await update.message.reply_text('Helping part', reply_markup=online_users[iu].get_keyboard())
     global previous_command
     previous_command = 'help'
 async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -104,6 +124,7 @@ def connect_database(DB: str):
 
 def handle_response(text: str) -> str:
     processed: str = text.lower()
+    print(filters.TEXT)
     numbers: str = processed.split(" ")
     if processed == 'e':
         return 'excel'
@@ -147,13 +168,19 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 if __name__ == '__main__':
     print('Starting bot...')
-    app = Application.builder().token(TOKEN).build()
+    app = Application.builder().token(BOT_TOKEN).build()
+
+    start_handler= CommandHandler('start', start_command)
+    help_handler= CommandHandler('help', help_command)
+    custom_handler= CommandHandler('custom', custom_command)
+    show_handler= CommandHandler('show', table_command)
 
     # Commands
-    app.add_handler(CommandHandler('start', start_command))
-    app.add_handler(CommandHandler('help', help_command))
-    app.add_handler(CommandHandler('custom', custom_command))
-    app.add_handler(CommandHandler('show', table_command))
+    app.add_handler(start_handler)
+    app.add_handler(help_handler)
+    app.add_handler(custom_handler)
+    app.add_handler(show_handler)
+
     # Messages
     app.add_handler(MessageHandler(filters.TEXT,handle_message))
 
