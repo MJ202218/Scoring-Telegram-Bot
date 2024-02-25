@@ -10,11 +10,15 @@ BOT_USERNAME: Final = '@Scoring_For_TAs_Bot'
 
 keyboard = [
         ["e", '/show'],
-        ["hello"],
+        ["hello", '/help'],
     ]
 
 a = ReplyKeyboardMarkup(keyboard, resize_keyboard=True , one_time_keyboard=True)
-
+ab = [
+        ['how are u'],
+        ["d"],
+    ]
+c = ReplyKeyboardMarkup(ab, resize_keyboard=True , one_time_keyboard=True)
 table = PrettyTable()
 queue = []
 previous_command: str = 'None'
@@ -26,7 +30,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global previous_command
     previous_command = 'start'
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('Helping part')
+    await update.message.reply_text('Helping part', reply_markup=c)
     global previous_command
     previous_command = 'help'
 async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
